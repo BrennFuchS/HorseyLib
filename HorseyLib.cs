@@ -56,7 +56,7 @@ public static class HorseyLib
     public static readonly FsmString PlayerLastName = FsmVariables.GlobalVariables.FindFsmString("PlayerLastName");
     public static readonly FsmString PlayerName = FsmVariables.GlobalVariables.FindFsmString("PlayerName");
 
-    /// <summary>Call this OnLoad()</summary>
+    /// <summary>Initializes variables, Call this OnLoad()</summary>
     public static void init()
     {
         if (initialized) return;
@@ -84,7 +84,6 @@ public static class HorseyLib
         GUI = GameObject.Find("GUI");
         Database = GameObject.Find("Database");
         FPSCamera = PLAYER.transform.Find("Pivot/AnimPivot/Camera/FPSCamera/FPSCamera").GetComponent<Camera>();
-        Database = GameObject.Find("Database");
         vehicles = Object.FindObjectsOfType<Drivetrain>();
 
         FPSCamera.gameObject.AddComponent<InteractableHandler>().cam = FPSCamera;
