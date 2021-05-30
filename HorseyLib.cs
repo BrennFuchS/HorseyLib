@@ -1,10 +1,15 @@
 ﻿using UnityEngine;
 using HutongGames.PlayMaker;
+using System;
+using Steamworks;
 
 public static class HorseyLib
 {
     static bool initialized;
-    public const int version = 1;
+    public const int version = 2;
+    public static bool steamOffline { get; private set; }
+    public static ulong steamID { get; private set; }
+    public static bool osWindows { get; private set; }
     public static GameObject SATSUMA { get; private set; }
     public static GameObject CARPARTS { get; private set; }
     public static GameObject PLAYER { get; private set; }
@@ -84,11 +89,59 @@ public static class HorseyLib
         GUI = GameObject.Find("GUI");
         Database = GameObject.Find("Database");
         FPSCamera = PLAYER.transform.Find("Pivot/AnimPivot/Camera/FPSCamera/FPSCamera").GetComponent<Camera>();
-        vehicles = Object.FindObjectsOfType<Drivetrain>();
+        vehicles = GameObject.FindObjectsOfType<Drivetrain>();
 
         FPSCamera.gameObject.AddComponent<InteractableHandler>().cam = FPSCamera;
+
+        osWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
+        try { steamID = SteamUser.GetSteamID().m_SteamID; }
+        catch { steamOffline = true; }
     }
 
     /// <summary>If the library is up to date with the expected version</summary>
     public static bool checkVersion(int expectedVersion) => version >= expectedVersion;
+
+    /// <summary>Check only if the user has a specific steamID</summary>
+    public static bool hasID(params ulong[] steamIDs)
+    {
+        for (var i = 0; i < steamIDs.Length; i++)
+            if (steamIDs[i] == steamID) return true;
+        return false;
+    }
+
+    /// <summary>Advanced steamID check to avoid bypasses</summary>
+    public static bool isUser(bool offlineOK, params ulong[] steamIDs)
+    {
+        if (!offlineOK && steamOffline) return true;
+        if (osWindows)
+        {
+            var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Amistech\My Summer Car");
+            if (key != null)
+            {
+                var val = key.GetValue("ID");
+                if (val != null)
+                {
+                    var id = ulong.Parse((string)val);
+                    for (var i = 0; i < steamIDs.Length; i++)
+                        if (steamIDs[i] == id)
+                        {
+                            key.Close();
+                            return true;
+                        }
+                }
+                key.Close();
+            }
+        }
+        if (hasID(steamIDs))
+        {
+            if (osWindows)
+            {
+                var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Amistech\My Summer Car", true);
+                key.SetValue("ID", steamID);
+                key.Close();
+            }
+            return true;
+        }
+        return false;
+    }
 }

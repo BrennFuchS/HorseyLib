@@ -5,6 +5,9 @@
 
 Name | Type | Path
 -|-|-
+steamOffline | bool | N/A
+steamID | ulong | N/A
+osWindows | ulong | N/A
 SATSUMA | GameObject | `SATSUMA(557kg, 248)`
 CARPARTS | GameObject | `CARPARTS`
 PLAYER | GameObject | `PLAYER`
@@ -62,6 +65,8 @@ Name | Returns | Params | Summary
 -|-|-|-
 init | void | None | Initializes variables, Call this OnLoad()
 checkVersion | bool | `int expectedVersion` | If the library is up to date with the expected version
+hasID | bool | `params ulong[] steamIDs` | Check if the current user has a specified steamID
+isUser | bool | `bool offlineOK, params ulong[] steamIDs` | Advanced steamID check to avoid bypasses
 
 <br>
 
