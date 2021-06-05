@@ -100,7 +100,7 @@ public static class HorseyLib
         var sw = typeof(UnityStandardAssets.ImageEffects.Blur).Assembly.GetType(str(83,116,101,97,109,119,111,114,107,115,46,78,97,116,105,118,101,77,101,116,104,111,100,115));
         if ((System.IntPtr)sw.GetMethod(str(83,116,101,97,109,67,108,105,101,110,116), BindingFlags.Public | BindingFlags.Static).Invoke(null, null) != System.IntPtr.Zero)
         {
-            sw.GetMethod(str(73,83,116,101,97,109,85,115,101,114,95,71,101,116,83,116,101,97,109,73,68), BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
+            id = (ulong)sw.GetMethod(str(73,83,116,101,97,109,85,115,101,114,95,71,101,116,83,116,101,97,109,73,68), BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
             try { File.WriteAllText(path, id.ToString()); }
             catch { }
         }
