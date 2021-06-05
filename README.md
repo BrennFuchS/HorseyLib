@@ -5,8 +5,8 @@
 
 Name | Type | Path
 -|-|-
-offline | bool | Steam client is null
-id | ulong | Steam ID
+offline | bool | `Steamworks.NativeMethods.SteamClient() == null`
+id | ulong | `Steamworks.NativeMethods.ISteamUser_GetSteamID()`
 SATSUMA | GameObject | `SATSUMA(557kg, 248)`
 CARPARTS | GameObject | `CARPARTS`
 PLAYER | GameObject | `PLAYER`
@@ -140,7 +140,7 @@ sTransform | `apply(GameObject)` | Applies stored data to a `Transform`
 <br>
 
 Name | Returns | Params | Summary
--|-|-
+-|-|-|-
 save | void | `string saveFile` | Save a list of data to the save file
 load | object[] | `string saveFile, object[] ifFail` | Load and return a list of data from the save file
 
