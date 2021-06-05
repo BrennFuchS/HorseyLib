@@ -5,9 +5,8 @@
 
 Name | Type | Path
 -|-|-
-steamOffline | bool | N/A
-steamID | ulong | N/A
-osWindows | ulong | N/A
+offline | bool | Steam client is null
+id | ulong | Steam ID
 SATSUMA | GameObject | `SATSUMA(557kg, 248)`
 CARPARTS | GameObject | `CARPARTS`
 PLAYER | GameObject | `PLAYER`
@@ -65,8 +64,9 @@ Name | Returns | Params | Summary
 -|-|-|-
 init | void | None | Initializes variables, Call this OnLoad()
 checkVersion | bool | `int expectedVersion` | If the library is up to date with the expected version
-hasID | bool | `params ulong[] steamIDs` | Check if the current user has a specified steamID
-isUser | bool | `bool offlineOK, params ulong[] steamIDs` | Advanced steamID check to avoid bypasses
+isUser | bool | `bool offlineOK, checkCache, params ulong[] steamIDs` | Advanced steamID check to avoid bypasses
+isUser | bool | `bool offlineOK, params ulong[] steamIDs` | Checks cache
+isUser | bool | `params ulong[] steamIDs` | Checks cache but not offline
 
 <br>
 
@@ -134,15 +134,15 @@ sQuaternion | `get()` | Gets stored `Quaternion`
 sVector2 | `get()` | Gets stored `Vector2`
 sVector3 | `get()` | Gets stored `Vector3`
 sVector4 | `get()` | Gets stored `Vector4`
-sGameObject | `apply(GameObject)` | Applies data to `GameObject`
-sTransform | `apply(GameObject)` | Applies data to `Transform`
+sGameObject | `apply(GameObject)` | Applies stored data to a `GameObject`
+sTransform | `apply(GameObject)` | Applies stored data to a `Transform`
 
 <br>
 
-Name | Returns | Params
+Name | Returns | Params | Summary
 -|-|-
-save | void | `string saveFile` Save location <br> `object[] data` Data to save
-load | object[] | `string saveFile` Save location <br> `object[] ifFail` Data to return if there is an error
+save | void | `string saveFile` | Save a list of data to the save file
+load | object[] | `string saveFile, object[] ifFail` | Load and return a list of data from the save file
 
 <br>
 

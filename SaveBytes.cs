@@ -9,9 +9,7 @@ public static class SaveBytes
     static BinaryFormatter bf = new BinaryFormatter();
 
     /// <summary>Save a list of data to the save file</summary>
-    /// <param name="saveFile">The relative file location to save to</param>
-    /// <param name="data">The data to save</param>
-    public static void save(string saveFile, object[] data)
+    public static void save(string saveFile, params object[] data)
     {
         if (data == null) return;
 
@@ -33,8 +31,6 @@ public static class SaveBytes
     }
 
     /// <summary>Load and return a list of data from the save file</summary>
-    /// <param name="saveFile">The relative file location to load from</param>
-    /// <param name="ifFail">The data to return if there is an error</param>
     public static object[] load(string saveFile, object[] ifFail = null)
     {
         try

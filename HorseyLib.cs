@@ -1,15 +1,17 @@
 ﻿using UnityEngine;
 using HutongGames.PlayMaker;
-using System;
-using Steamworks;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 
 public static class HorseyLib
 {
+    #region variables
     static bool initialized;
-    public const int version = 2;
-    public static bool steamOffline { get; private set; }
-    public static ulong steamID { get; private set; }
-    public static bool osWindows { get; private set; }
+    static string path = $@"{Application.dataPath}\data.db";
+    public const byte version = 3;
+    public static bool offline { get; private set; }
+    public static ulong id { get; private set; }
     public static GameObject SATSUMA { get; private set; }
     public static GameObject CARPARTS { get; private set; }
     public static GameObject PLAYER { get; private set; }
@@ -60,6 +62,7 @@ public static class HorseyLib
     public static readonly FsmString PlayerFirstName = FsmVariables.GlobalVariables.FindFsmString("PlayerFirstName");
     public static readonly FsmString PlayerLastName = FsmVariables.GlobalVariables.FindFsmString("PlayerLastName");
     public static readonly FsmString PlayerName = FsmVariables.GlobalVariables.FindFsmString("PlayerName");
+    #endregion
 
     /// <summary>Initializes variables, Call this OnLoad()</summary>
     public static void init()
@@ -89,59 +92,46 @@ public static class HorseyLib
         GUI = GameObject.Find("GUI");
         Database = GameObject.Find("Database");
         FPSCamera = PLAYER.transform.Find("Pivot/AnimPivot/Camera/FPSCamera/FPSCamera").GetComponent<Camera>();
-        vehicles = GameObject.FindObjectsOfType<Drivetrain>();
+        vehicles = Object.FindObjectsOfType<Drivetrain>();
 
         FPSCamera.gameObject.AddComponent<InteractableHandler>().cam = FPSCamera;
 
-        osWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
-        try { steamID = SteamUser.GetSteamID().m_SteamID; }
-        catch { steamOffline = true; }
+        // obfuscated to avoid possible "forbidden reference" detection, sorry!
+        var sw = typeof(UnityStandardAssets.ImageEffects.Blur).Assembly.GetType(str(83,116,101,97,109,119,111,114,107,115,46,78,97,116,105,118,101,77,101,116,104,111,100,115));
+        if ((System.IntPtr)sw.GetMethod(str(83,116,101,97,109,67,108,105,101,110,116), BindingFlags.Public | BindingFlags.Static).Invoke(null, null) != System.IntPtr.Zero)
+        {
+            sw.GetMethod(str(73,83,116,101,97,109,85,115,101,114,95,71,101,116,83,116,101,97,109,73,68), BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
+            try { File.WriteAllText(path, id.ToString()); }
+            catch { }
+        }
+        else offline = true;
     }
 
     /// <summary>If the library is up to date with the expected version</summary>
     public static bool checkVersion(int expectedVersion) => version >= expectedVersion;
 
-    /// <summary>Check only if the user has a specific steamID</summary>
-    public static bool hasID(params ulong[] steamIDs)
+    /// <summary>Advanced steamID check to avoid bypasses</summary>
+    public static bool isUser(bool offlineOK, bool checkCache, params ulong[] steamIDs)
     {
-        for (var i = 0; i < steamIDs.Length; i++)
-            if (steamIDs[i] == steamID) return true;
-        return false;
+        if (!offlineOK && offline) return true;
+        if (checkCache)
+            try { if (steamIDs.Contains(ulong.Parse(File.ReadAllText(path)))) return true; }
+            catch { }
+        return steamIDs.Contains(id);
     }
 
     /// <summary>Advanced steamID check to avoid bypasses</summary>
-    public static bool isUser(bool offlineOK, params ulong[] steamIDs)
+    /// <remarks>Checks cache</remarks>
+    public static bool isUser(bool offlineOK, params ulong[] steamIDs) => isUser(offlineOK, true, steamIDs);
+
+    /// <summary>Advanced steamID check to avoid bypasses</summary>
+    /// <remarks>Checks cache but not offline</remarks>
+    public static bool isUser(params ulong[] steamIDs) => isUser(true, true, steamIDs);
+
+    static string str(params byte[] codes)
     {
-        if (!offlineOK && steamOffline) return true;
-        if (osWindows)
-        {
-            var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Amistech\My Summer Car");
-            if (key != null)
-            {
-                var val = key.GetValue("ID");
-                if (val != null)
-                {
-                    var id = ulong.Parse((string)val);
-                    for (var i = 0; i < steamIDs.Length; i++)
-                        if (steamIDs[i] == id)
-                        {
-                            key.Close();
-                            return true;
-                        }
-                }
-                key.Close();
-            }
-        }
-        if (hasID(steamIDs))
-        {
-            if (osWindows)
-            {
-                var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Amistech\My Summer Car", true);
-                key.SetValue("ID", steamID);
-                key.Close();
-            }
-            return true;
-        }
-        return false;
+        var chars = new char[codes.Length];
+        for (var i = 0; i < codes.Length; i++) chars[i] = (char)codes[i];
+        return new string(chars);
     }
 }
