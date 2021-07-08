@@ -1,3 +1,5 @@
+<i>Please don't include these files with your mods! instead, link the [nexus download](https://www.nexusmods.com/mysummercar/mods/799) in required mods avoid clashes in versions</i>
+
 # HorseyLib
 ### Contains all helper methods & properties
 
@@ -74,7 +76,7 @@ isUser | bool | `params ulong[] steamIDs` | Checks cache but not offline
 ### A class to make interaction easier
 
 <br>
-
+Add component to gameobject for code to be ran
 <i>All methods are only called at a max distance of 1 meter away just like the game does</i>
 
 Name | Called
