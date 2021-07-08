@@ -95,6 +95,9 @@ class InteractableHandler : MonoBehaviour
         else if (obj)
         {
             obj.mouseExit();
+            obj.mouseEntered = false;
+            obj.lClicked = false;
+            obj.rClicked = false;
             if (obj.lClicked) obj.lRelease();
             if (obj.rClicked) obj.rRelease();
             obj = null;
