@@ -14,19 +14,7 @@ public static class SaveBytes
         if (data == null) return;
 
         var fs = new FileStream(saveFile, FileMode.Create);
-        for (var i = 0; i < data.Length; i++)
-        {
-            if (data[i] == null) continue;
-
-            if (data[i] is Color color) data[i] = new sColor(color);
-            else if (data[i] is Quaternion quaternion) data[i] = new sQuaternion(quaternion);
-            else if (data[i] is Vector2 vector) data[i] = new sVector2(vector);
-            else if (data[i] is Vector3 vector1) data[i] = new sVector3(vector1);
-            else if (data[i] is Vector4 vector2) data[i] = new sVector4(vector2);
-            else if (data[i] is GameObject gameObject) data[i] = new sGameObject(gameObject);
-            else if (data[i] is Transform transform) data[i] = new sTransform(transform);
-        }
-        bf.Serialize(fs, data);
+        bf.Serialize(fs, fixArray(data));
         fs.Close();
     }
 
@@ -45,6 +33,24 @@ public static class SaveBytes
             Console.WriteLine(e);
             return ifFail;
         }
+    }
+
+    /// <summary>Replace all unity classes that can be saved with their saveable variants</summary>
+    public static object[] fixArray(object[] array)
+    {
+        for (var i = 0; i < array.Length; i++)
+        {
+            if (array[i] == null) continue;
+
+            if (array[i] is Color color) array[i] = new sColor(color);
+            else if (array[i] is Quaternion quaternion) array[i] = new sQuaternion(quaternion);
+            else if (array[i] is Vector2 vector) array[i] = new sVector2(vector);
+            else if (array[i] is Vector3 vector1) array[i] = new sVector3(vector1);
+            else if (array[i] is Vector4 vector2) array[i] = new sVector4(vector2);
+            else if (array[i] is GameObject gameObject) array[i] = new sGameObject(gameObject);
+            else if (array[i] is Transform transform) array[i] = new sTransform(transform);
+        }
+        return array;
     }
 }
 
