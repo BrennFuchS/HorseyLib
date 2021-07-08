@@ -145,6 +145,7 @@ Name | Returns | Params | Summary
 -|-|-|-
 save | void | `string saveFile` | Save a list of data to the save file
 load | object[] | `string saveFile, object[] ifFail` | Load and return a list of data from the save file
+fixArray | object[] | `object[] array` | Replace all unity classes that can be saved with their saveable variants
 
 <br>
 
