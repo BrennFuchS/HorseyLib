@@ -1,32 +1,55 @@
 ﻿using UnityEngine;
 using System;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 
 /// <summary>Saves classes with BinaryFormatters</summary>
 public static class SaveBytes
 {
-    static BinaryFormatter bf = new BinaryFormatter();
+    static BinaryFormatter bf = getBinaryFormatter();
 
-    /// <summary>Save a list of data to the save file</summary>
-    public static void save(string saveFile, params object[] data)
+    static BinaryFormatter getBinaryFormatter()
+    {
+        var sc = new StreamingContext(StreamingContextStates.All);
+        var bf = new BinaryFormatter();
+        var ss = new SurrogateSelector();
+
+        ss.AddSurrogate(typeof(Color), sc, new sColor());
+        ss.AddSurrogate(typeof(Quaternion), sc, new sQuaternion());
+        ss.AddSurrogate(typeof(Vector4), sc, new sVector4());
+        ss.AddSurrogate(typeof(Vector3), sc, new sVector3());
+        ss.AddSurrogate(typeof(Vector2), sc, new sVector2());
+
+        bf.SurrogateSelector = ss;
+        return bf;
+    }
+
+    /// <summary>Save data to the save file</summary>
+    public static void save(string saveFile, params object[] data) => save(saveFile, (object)data);
+
+    /// <summary>Save data to the save file</summary>
+    public static void save(string saveFile, object data)
     {
         if (data == null) return;
 
         var fs = new FileStream(saveFile, FileMode.Create);
-        bf.Serialize(fs, fixArray(data));
+        bf.Serialize(fs, data);
         fs.Close();
     }
 
-    /// <summary>Load and return a list of data from the save file</summary>
-    public static object[] load(string saveFile, object[] ifFail = null)
+    /// <summary>Load and return a data from the save file</summary>
+    public static object[] load(string saveFile, object[] ifFail = null) => load<object[]>(saveFile, ifFail);
+
+    /// <summary>Load and return a data from the save file</summary>
+    public static T load<T>(string saveFile, T ifFail = null) where T : class
     {
         try
         {
             var fs = new FileStream(saveFile, FileMode.Open);
             var data = (object[])bf.Deserialize(fs);
             fs.Close();
-            return data;
+            return data as T;
         }
         catch (Exception e)
         {
@@ -35,187 +58,122 @@ public static class SaveBytes
         }
     }
 
-    /// <summary>Replace all unity classes that can be saved with their saveable variants</summary>
-    public static object[] fixArray(object[] array)
+    class sColor : ISerializationSurrogate
     {
-        for (var i = 0; i < array.Length; i++)
+        public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
-            if (array[i] == null) continue;
+            var color = (Color)obj;
 
-            if (array[i] is Color color) array[i] = new sColor(color);
-            else if (array[i] is Quaternion quaternion) array[i] = new sQuaternion(quaternion);
-            else if (array[i] is Vector2 vector) array[i] = new sVector2(vector);
-            else if (array[i] is Vector3 vector1) array[i] = new sVector3(vector1);
-            else if (array[i] is Vector4 vector2) array[i] = new sVector4(vector2);
-            else if (array[i] is GameObject gameObject) array[i] = new sGameObject(gameObject);
-            else if (array[i] is Transform transform) array[i] = new sTransform(transform);
+            info.AddValue("r", color.r);
+            info.AddValue("g", color.g);
+            info.AddValue("b", color.b);
+            info.AddValue("a", color.a);
         }
-        return array;
-    }
-}
 
-/// <summary>Saved class of UnityEngine.Color</summary>
-/// <remarks>Saves r, g, b, and a</remarks>
-[Serializable]
-public class sColor
-{
-    public float r;
-    public float g;
-    public float b;
-    public float a;
+        public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
+        {
+            var color = (Color)obj;
 
-    internal sColor(Color color)
-    {
-        r = color.r;
-        g = color.g;
-        b = color.b;
-        a = color.a;
+            color.r = info.GetSingle("r");
+            color.g = info.GetSingle("g");
+            color.b = info.GetSingle("b");
+            color.a = info.GetSingle("a");
+
+            return color;
+        }
     }
 
-    /// <summary>Get the data as a Color</summary>
-    public Color get() => new Color(r, g, b, a);
-
-    public override string ToString() => get().ToString();
-}
-
-/// <summary>Saved class of UnityEngine.Quaternion</summary>
-/// <remarks>Saves x, y, z, and w</remarks>
-[Serializable]
-public class sQuaternion
-{
-    public float x;
-    public float y;
-    public float z;
-    public float w;
-
-    internal sQuaternion(Quaternion quaternion)
+    class sQuaternion : ISerializationSurrogate
     {
-        x = quaternion.x;
-        y = quaternion.y;
-        z = quaternion.z;
-        w = quaternion.w;
+        public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
+        {
+            var quaternion = (Quaternion)obj;
+
+            info.AddValue("x", quaternion.x);
+            info.AddValue("y", quaternion.y);
+            info.AddValue("z", quaternion.z);
+            info.AddValue("w", quaternion.w);
+        }
+
+        public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
+        {
+            var quaternion = (Quaternion)obj;
+
+            quaternion.x = info.GetSingle("x");
+            quaternion.y = info.GetSingle("y");
+            quaternion.z = info.GetSingle("z");
+            quaternion.w = info.GetSingle("w");
+
+            return quaternion;
+        }
     }
 
-    /// <summary>Get the data as a Quaternion</summary>
-    public Quaternion get() => new Quaternion(x, y, z, w);
-
-    public override string ToString() => get().ToString();
-}
-
-/// <summary>Saved class of UnityEngine.Vector4</summary>
-/// <remarks>Saves x, y, z, and w</remarks>
-[Serializable]
-public class sVector4
-{
-    public float x;
-    public float y;
-    public float z;
-    public float w;
-
-    internal sVector4(Vector4 vector)
+    class sVector4 : ISerializationSurrogate
     {
-        x = vector.x;
-        y = vector.y;
-        z = vector.z;
-        w = vector.w;
+        public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
+        {
+            var vector = (Vector4)obj;
+
+            info.AddValue("x", vector.x);
+            info.AddValue("y", vector.y);
+            info.AddValue("z", vector.z);
+            info.AddValue("w", vector.w);
+        }
+
+        public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
+        {
+            var vector = (Vector4)obj;
+
+            vector.x = info.GetSingle("x");
+            vector.y = info.GetSingle("y");
+            vector.z = info.GetSingle("z");
+            vector.w = info.GetSingle("w");
+
+            return vector;
+        }
     }
 
-    /// <summary>Get the data as a Vector4</summary>
-    public Vector4 get() => new Vector4(x, y, z, w);
-
-    public override string ToString() => get().ToString();
-}
-
-/// <summary>Saved class of UnityEngine.Vector3</summary>
-/// <remarks>Saves x, y, and z</remarks>
-[Serializable]
-public class sVector3
-{
-    public float x;
-    public float y;
-    public float z;
-
-    internal sVector3(Vector3 vector)
+    class sVector3 : ISerializationSurrogate
     {
-        x = vector.x;
-        y = vector.y;
-        z = vector.z;
+        public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
+        {
+            var vector = (Vector3)obj;
+
+            info.AddValue("x", vector.x);
+            info.AddValue("y", vector.y);
+            info.AddValue("z", vector.z);
+        }
+
+        public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
+        {
+            var vector = (Vector3)obj;
+
+            vector.x = info.GetSingle("x");
+            vector.y = info.GetSingle("y");
+            vector.z = info.GetSingle("z");
+
+            return vector;
+        }
     }
 
-    /// <summary>Get the data as a Vector3</summary>
-    public Vector3 get() => new Vector3(x, y, z);
-
-    public override string ToString() => get().ToString();
-}
-
-/// <summary>Saved class of UnityEngine.Vector2</summary>
-/// <remarks>Saves x and y</remarks>
-[Serializable]
-public class sVector2
-{
-    public float x;
-    public float y;
-    public float z;
-    public float w;
-
-    internal sVector2(Vector2 vector)
+    class sVector2 : ISerializationSurrogate
     {
-        x = vector.x;
-        y = vector.y;
-    }
+        public void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
+        {
+            var vector = (Vector2)obj;
 
-    /// <summary>Get the data as a Vector2</summary>
-    public Vector2 get() => new Vector2(x, y);
+            info.AddValue("x", vector.x);
+            info.AddValue("y", vector.y);
+        }
 
-    public override string ToString() => get().ToString();
-}
+        public object SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector selector)
+        {
+            var vector = (Vector2)obj;
 
-/// <summary>Saved class of UnityEngine.GameObject</summary>
-/// <remarks>Saves name, active, and transform</remarks>
-[Serializable]
-public class sGameObject
-{
-    public sTransform transform;
-    public string name;
-    public bool active;
+            vector.x = info.GetSingle("x");
+            vector.y = info.GetSingle("y");
 
-    internal sGameObject(GameObject gameObject)
-    {
-        transform = new sTransform(gameObject.transform);
-        name = gameObject.name;
-        active = gameObject.activeSelf;
-    }
-
-    /// <summary>Apply the data to a GameObject</summary>
-    public void apply(GameObject gameObject)
-    {
-        transform.apply(gameObject.transform);
-        gameObject.name = name;
-        gameObject.SetActive(active);
-    }
-}
-
-/// <summary>Saved class of UnityEngine.Transform</summary>
-/// <remarks>Saves local position, local rotation, and local scale</remarks>
-[Serializable]
-public class sTransform
-{
-    public sVector3 position;
-    public sVector3 rotation;
-    public sVector3 scale;
-
-    internal sTransform(Transform transform)
-    {
-        position = new sVector3(transform.localPosition);
-        rotation = new sVector3(transform.localEulerAngles);
-        scale = new sVector3(transform.localScale);
-    }
-
-    /// <summary>Apply the data to a Transform</summary>
-    public void apply(Transform transform)
-    {
-        transform.localPosition = position.get();
-        transform.localEulerAngles = rotation.get();
-        transform.localScale = scale.get();
+            return vector;
+        }
     }
 }

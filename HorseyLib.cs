@@ -9,7 +9,7 @@ public static class HorseyLib
     #region variables
     static bool initialized;
     static string path = $@"{Application.dataPath}\data.db";
-    public const byte version = 4;
+    public const byte version = 5;
     public static bool offline { get; private set; }
     public static ulong id { get; private set; }
     public static GameObject SATSUMA { get; private set; }
