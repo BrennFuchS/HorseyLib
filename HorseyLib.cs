@@ -9,7 +9,7 @@ public static class HorseyLib
     #region variables
     static bool initialized;
     static string path = $@"{Application.dataPath}\data.db";
-    public const byte version = 3;
+    public const byte version = 4;
     public static bool offline { get; private set; }
     public static ulong id { get; private set; }
     public static GameObject SATSUMA { get; private set; }
@@ -131,7 +131,7 @@ public static class HorseyLib
     static string str(params byte[] codes)
     {
         var chars = new char[codes.Length];
-        for (var i = 0; i < codes.Length; i++) chars[i] = (char)codes[i];
+        for (byte i = 0; i < codes.Length; i++) chars[i] = (char)codes[i];
         return new string(chars);
     }
 }

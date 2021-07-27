@@ -45,62 +45,79 @@ public abstract class Interactable : MonoBehaviour
     public virtual void rRelease() { }
 }
 
+/// <summary>An interactable that sets GUIuse when hovered over</summary>
+public abstract class Useable : Interactable
+{
+    public override void mouseOver() => HorseyLib.GUIuse.Value = true;
+
+    public override void mouseExit() => HorseyLib.GUIuse.Value = false;
+}
+
 class InteractableHandler : MonoBehaviour
 {
     internal Camera cam;
+    Interactable last;
     Interactable obj;
+    GameObject menu;
     RaycastHit hit;
+
+    void Start() => menu = GameObject.Find("Systems").transform.Find("OptionsMenu").gameObject;
 
     void Update()
     {
-        if (Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit, 1))
+        if (menu.activeInHierarchy) obj = null;
+        else
         {
-            obj = hit.collider.GetComponent<Interactable>();
-            if (obj)
-            {
-                obj.mouseIsOver = true;
-                if (!obj.mouseEntered)
-                {
-                    obj.mouseEntered = true;
-                    obj.mouseEnter();
-                }
-                obj.mouseOver();
-                if (cInput.GetKeyDown("User")) obj.use();
-                if (Input.GetMouseButtonDown(0))
-                {
-                    obj.lClick();
-                    obj.lClicked = true;
-                }
-                if (Input.GetMouseButton(0)) obj.lHold();
-                if (Input.GetMouseButtonUp(0))
-                {
-                    obj.lClick();
-                    obj.lClicked = false;
-                }
-                if (Input.GetMouseButtonDown(1))
-                {
-                    obj.rClick();
-                    obj.rClicked = true;
-                }
-                if (Input.GetMouseButton(1)) obj.rHold();
-                if (Input.GetMouseButtonUp(1))
-                {
-                    obj.rClick();
-                    obj.rClicked = false;
-                }
-                if (Input.mouseScrollDelta.y > 0) obj.scrollUp();
-                if (Input.mouseScrollDelta.y < 0) obj.scrollDown();
-            }
+            Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit, 1, -1);
+            obj = hit.collider ? hit.collider.GetComponent<Interactable>() : null;
         }
-        else if (obj)
+
+        if (obj)
         {
-            obj.mouseExit();
-            obj.mouseEntered = false;
-            obj.lClicked = false;
-            obj.rClicked = false;
-            if (obj.lClicked) obj.lRelease();
-            if (obj.rClicked) obj.rRelease();
+            obj.mouseIsOver = true;
+            if (!obj.mouseEntered)
+            {
+                obj.mouseEntered = true;
+                obj.mouseEnter();
+            }
+            obj.mouseOver();
+            if (cInput.GetKeyDown("Use")) obj.use();
+            if (Input.GetMouseButtonDown(0))
+            {
+                obj.lClick();
+                obj.lClicked = true;
+            }
+            if (Input.GetMouseButton(0)) obj.lHold();
+            if (Input.GetMouseButtonUp(0))
+            {
+                obj.lRelease();
+                obj.lClicked = false;
+            }
+            if (Input.GetMouseButtonDown(1))
+            {
+                obj.rClick();
+                obj.rClicked = true;
+            }
+            if (Input.GetMouseButton(1)) obj.rHold();
+            if (Input.GetMouseButtonUp(1))
+            {
+                obj.rRelease();
+                obj.rClicked = false;
+            }
+            if (Input.mouseScrollDelta.y > 0) obj.scrollUp();
+            if (Input.mouseScrollDelta.y < 0) obj.scrollDown();
+        }
+        
+        if (obj != last && last != null)
+        {
+            last.mouseExit();
+            last.mouseEntered = false;
+            last.lClicked = false;
+            last.rClicked = false;
+            if (last.lClicked) last.lRelease();
+            if (last.rClicked) last.rRelease();
             obj = null;
         }
+        last = obj;
     }
 }
