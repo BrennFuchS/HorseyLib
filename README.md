@@ -1,4 +1,4 @@
-<i>Please don't include these files with your mods! instead, link the [nexus download](https://www.nexusmods.com/mysummercar/mods/799) in required mods avoid clashes in versions</i>
+<i>Please don't include these files with your mods! instead, link the [releases page](https://github.com/Horsey4/HorseyLib/releases) in required mods avoid clashes in versions</i>
 
 # HorseyLib
 ### Contains all helper methods & properties
@@ -122,55 +122,35 @@ Can save any class marked as `System.Serializable`, or any of the exceptions bel
 - UnityEngine.Vector2
 - UnityEngine.Vector3
 - UnityEngine.Vector4
-- UnityEngine.GameObject
-- UnityEngine.Transform
-
-<i>These classes are returned as s[classname] since the default aren't serializable</i>
-
-<br>
-
-Class | Method | Summary
--|-|-
-sColor | `get()` | Gets stored `Color`
-sQuaternion | `get()` | Gets stored `Quaternion`
-sVector2 | `get()` | Gets stored `Vector2`
-sVector3 | `get()` | Gets stored `Vector3`
-sVector4 | `get()` | Gets stored `Vector4`
-sGameObject | `apply(GameObject)` | Applies stored data to a `GameObject`
-sTransform | `apply(GameObject)` | Applies stored data to a `Transform`
 
 <br>
 
 Name | Returns | Params | Summary
 -|-|-|-
-save | void | `string saveFile` | Save a list of data to the save file
+save | void | `string saveFile, params object[] data` | Save a list of data to the save file
+save | void | `string saveFile, object data` | Save data to the save file
 load | object[] | `string saveFile, object[] ifFail` | Load and return a list of data from the save file
-fixArray | object[] | `object[] array` | Replace all unity classes that can be saved with their saveable variants
+load\<T> | T | `string saveFile, T ifFail` | Load and return data from the save file
 
 <br>
 
 ## Example
 
 ```cs
-SaveBytes.save(saveFile, new object[]
-{
+SaveBytes.save(saveFile,
 	myColor,
 	myQuaternion,
 	myVector2,
 	myVector3,
-	myVector4,
-	myGameObject,
-	myTransform
-});
+	myVector4
+);
 
 var data = SaveBytes.load(saveFile);
 if (data == null) return; // failed to load save
 
-myColor = ((sColor)data[0]).get();
-myQuaternion = ((sQuaternion)data[1]).get();
-myVector2 = ((sVector2)data[2]).get();
-myVector3 = ((sVector3)data[3]).get();
-myVector4 = ((sVector4)data[4]).get();
-((sGameObject)data[5]).apply(myGameObject);
-((sTransform)data[6]).apply(myTransform);
+myColor = (Color)data[0];
+myQuaternion = (Quaternion)data[1];
+myVector2 = (Vector2)data[2];
+myVector3 = (Vector3)data[3];
+myVector4 = (Vector4)data[4];
 ```

@@ -25,7 +25,7 @@ public static class SaveBytes
         return bf;
     }
 
-    /// <summary>Save data to the save file</summary>
+    /// <summary>Save a list of data to the save file</summary>
     public static void save(string saveFile, params object[] data) => save(saveFile, (object)data);
 
     /// <summary>Save data to the save file</summary>
@@ -38,10 +38,10 @@ public static class SaveBytes
         fs.Close();
     }
 
-    /// <summary>Load and return a data from the save file</summary>
+    /// <summary>Load and return a list of data from the save file</summary>
     public static object[] load(string saveFile, object[] ifFail = null) => load<object[]>(saveFile, ifFail);
 
-    /// <summary>Load and return a data from the save file</summary>
+    /// <summary>Load and return data from the save file</summary>
     public static T load<T>(string saveFile, T ifFail = null) where T : class
     {
         try
