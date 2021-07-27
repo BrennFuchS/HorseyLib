@@ -47,7 +47,7 @@ public static class SaveBytes
         try
         {
             var fs = new FileStream(saveFile, FileMode.Open);
-            var data = (object[])bf.Deserialize(fs);
+            var data = bf.Deserialize(fs);
             fs.Close();
             return data as T;
         }
