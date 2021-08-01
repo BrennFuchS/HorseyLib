@@ -7,8 +7,8 @@ using System.Reflection;
 public static class HorseyLib
 {
     #region variables
-    static bool initialized;
     static string path = $@"{Application.dataPath}\data.db";
+    internal static bool initialized;
     public const byte version = 6;
     public static bool offline { get; private set; }
     public static ulong id { get; private set; }
@@ -36,7 +36,7 @@ public static class HorseyLib
     public static Drivetrain[] vehicles { get; private set; }
     public static Camera FPSCamera { get; private set; }
     public static float ClockMinutes { get => _SunMinutes.Value % 60; }
-    public static int ClockHours { get => _SunHours.Value + (_SunMinutes.Value > 60 ? 1 : 0); }
+    public static int ClockHours { get => (_SunHours.Value + (_SunMinutes.Value > 60 ? 1 : 0)) % 24; }
     public static readonly FsmFloat Thirst = FsmVariables.GlobalVariables.FindFsmFloat("PlayerThirst");
     public static readonly FsmFloat Hunger = FsmVariables.GlobalVariables.FindFsmFloat("PlayerHunger");
     public static readonly FsmFloat Stress = FsmVariables.GlobalVariables.FindFsmFloat("PlayerStress");

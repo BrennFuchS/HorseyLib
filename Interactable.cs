@@ -120,4 +120,6 @@ class InteractableHandler : MonoBehaviour
         }
         last = obj;
     }
+
+    void OnDestroy() => HorseyLib.initialized = false;
 }
