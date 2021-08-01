@@ -35,6 +35,8 @@ public static class HorseyLib
     public static GameObject Database { get; private set; }
     public static Drivetrain[] vehicles { get; private set; }
     public static Camera FPSCamera { get; private set; }
+    public static float ClockMinutes { get => _SunMinutes.Value % 60; }
+    public static int ClockHours { get => _SunHours.Value + (_SunMinutes.Value > 60 ? 1 : 0); }
     public static readonly FsmFloat Thirst = FsmVariables.GlobalVariables.FindFsmFloat("PlayerThirst");
     public static readonly FsmFloat Hunger = FsmVariables.GlobalVariables.FindFsmFloat("PlayerHunger");
     public static readonly FsmFloat Stress = FsmVariables.GlobalVariables.FindFsmFloat("PlayerStress");
@@ -62,6 +64,8 @@ public static class HorseyLib
     public static readonly FsmString PlayerFirstName = FsmVariables.GlobalVariables.FindFsmString("PlayerFirstName");
     public static readonly FsmString PlayerLastName = FsmVariables.GlobalVariables.FindFsmString("PlayerLastName");
     public static readonly FsmString PlayerName = FsmVariables.GlobalVariables.FindFsmString("PlayerName");
+    static FsmFloat _SunMinutes;
+    static FsmInt _SunHours;
     #endregion
 
     /// <summary>Initializes variables, Call this OnLoad()</summary>
@@ -93,6 +97,10 @@ public static class HorseyLib
         Database = GameObject.Find("Database");
         FPSCamera = PLAYER.transform.Find("Pivot/AnimPivot/Camera/FPSCamera/FPSCamera").GetComponent<Camera>();
         vehicles = Object.FindObjectsOfType<Drivetrain>();
+
+        var sun = GameObject.Find("MAP/SUN/Pivot/SUN").GetComponent<PlayMakerFSM>().FsmVariables;
+        _SunMinutes = sun.FindFsmFloat("Minutes");
+        _SunHours = sun.FindFsmInt("Time");
 
         FPSCamera.gameObject.AddComponent<InteractableHandler>().cam = FPSCamera;
 

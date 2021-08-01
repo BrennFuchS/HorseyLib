@@ -59,6 +59,8 @@ CurrentVehicle | FsmString | `Globals/PlayerCurrentVehicle`
 PlayerFirstName | FsmString | `Globals/PlayerFirstName`
 PlayerLastName | FsmString | `Globals/PlayerLastName`
 PlayerName | FsmString | `Globals/PlayerName`
+ClockMinutes | float | N/A
+ClockHours | int | N/A
 
 <br>
 
