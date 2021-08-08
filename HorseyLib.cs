@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using HutongGames.PlayMaker;
+using MSCLoader;
+using System;
 using System.IO;
+using System.Net;
 using System.Linq;
 using System.Reflection;
 
@@ -9,9 +12,11 @@ public static class HorseyLib
     #region variables
     static string path = $@"{Application.dataPath}\data.db";
     internal static bool initialized;
-    public const byte version = 6;
+    static bool initializedOnce;
+    public const byte version = 7;
     public static bool offline { get; private set; }
     public static ulong id { get; private set; }
+    public static ulong[] cacheIDs { get; private set; }
     public static GameObject SATSUMA { get; private set; }
     public static GameObject CARPARTS { get; private set; }
     public static GameObject PLAYER { get; private set; }
@@ -35,8 +40,8 @@ public static class HorseyLib
     public static GameObject Database { get; private set; }
     public static Drivetrain[] vehicles { get; private set; }
     public static Camera FPSCamera { get; private set; }
-    public static float ClockMinutes { get => _SunMinutes.Value % 60; }
-    public static int ClockHours { get => (_SunHours.Value + (_SunMinutes.Value > 60 ? 1 : 0)) % 24; }
+    public static float ClockMinutes => _SunMinutes.Value % 60;
+    public static int ClockHours => (_SunHours.Value + (_SunMinutes.Value > 60 ? 1 : 0)) % 24;
     public static readonly FsmFloat Thirst = FsmVariables.GlobalVariables.FindFsmFloat("PlayerThirst");
     public static readonly FsmFloat Hunger = FsmVariables.GlobalVariables.FindFsmFloat("PlayerHunger");
     public static readonly FsmFloat Stress = FsmVariables.GlobalVariables.FindFsmFloat("PlayerStress");
@@ -64,11 +69,14 @@ public static class HorseyLib
     public static readonly FsmString PlayerFirstName = FsmVariables.GlobalVariables.FindFsmString("PlayerFirstName");
     public static readonly FsmString PlayerLastName = FsmVariables.GlobalVariables.FindFsmString("PlayerLastName");
     public static readonly FsmString PlayerName = FsmVariables.GlobalVariables.FindFsmString("PlayerName");
+    static readonly string type = "Steamworks.NativeMethods";
+    static readonly string method1 = "SteamClient";
+    static readonly string method2 = "ISteamUser_GetSteamID";
     static FsmFloat _SunMinutes;
     static FsmInt _SunHours;
     #endregion
 
-    /// <summary>Initializes variables, Call this OnLoad()</summary>
+    /// <summary>Initializes variables, Call this OnLoad()</summary>\
     public static void init()
     {
         if (initialized) return;
@@ -96,20 +104,48 @@ public static class HorseyLib
         GUI = GameObject.Find("GUI");
         Database = GameObject.Find("Database");
         FPSCamera = PLAYER.transform.Find("Pivot/AnimPivot/Camera/FPSCamera/FPSCamera").GetComponent<Camera>();
-        vehicles = Object.FindObjectsOfType<Drivetrain>();
+        vehicles = GameObject.FindObjectsOfType<Drivetrain>();
 
-        var sun = GameObject.Find("MAP/SUN/Pivot/SUN").GetComponent<PlayMakerFSM>().FsmVariables;
+        var sun = MAP.transform.Find("SUN/Pivot/SUN").GetComponent<PlayMakerFSM>().FsmVariables;
         _SunMinutes = sun.FindFsmFloat("Minutes");
         _SunHours = sun.FindFsmInt("Time");
 
         FPSCamera.gameObject.AddComponent<InteractableHandler>().cam = FPSCamera;
 
-        // obfuscated to avoid possible "forbidden reference" detection, sorry!
-        var sw = typeof(UnityStandardAssets.ImageEffects.Blur).Assembly.GetType(str(83,116,101,97,109,119,111,114,107,115,46,78,97,116,105,118,101,77,101,116,104,111,100,115));
-        if ((System.IntPtr)sw.GetMethod(str(83,116,101,97,109,67,108,105,101,110,116), BindingFlags.Public | BindingFlags.Static).Invoke(null, null) != System.IntPtr.Zero)
+        if (initializedOnce) return;
+        initializedOnce = true;
+
+        try
         {
-            id = (ulong)sw.GetMethod(str(73,83,116,101,97,109,85,115,101,114,95,71,101,116,83,116,101,97,109,73,68), BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
-            try { File.WriteAllText(path, id.ToString()); }
+            using (var br = new BinaryReader(File.Open(path, FileMode.Open)))
+            {
+                var len = br.ReadInt32();
+                cacheIDs = new ulong[len];
+                for (var i = 0; i < len; i++) cacheIDs[i] = br.ReadUInt64();
+            }
+        }
+        catch { cacheIDs = new ulong[0]; }
+
+        // obfuscated to avoid possible "forbidden reference" detection, sorry!
+        var sw = typeof(UnityStandardAssets.ImageEffects.Blur).Assembly.GetType(type);
+        if ((IntPtr)sw.GetMethod(method1, BindingFlags.Public | BindingFlags.Static).Invoke(null, null) != IntPtr.Zero)
+        {
+            id = (ulong)sw.GetMethod(method2, BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
+            try
+            {
+                if (!cacheIDs.Contains(id))
+                {
+                    var arr = new ulong[cacheIDs.Length + 1];
+                    for (var i = 0; i < cacheIDs.Length; i++) arr[i] = cacheIDs[i];
+                    arr[cacheIDs.Length] = id;
+                    cacheIDs = arr;
+                    using (var bw = new BinaryWriter(File.Open(path, FileMode.Create)))
+                    {
+                        bw.Write(cacheIDs.Length);
+                        for (var i = 0; i < cacheIDs.Length; i++) bw.Write(cacheIDs[i]);
+                    }
+                }
+            }
             catch { }
         }
         else offline = true;
@@ -118,28 +154,42 @@ public static class HorseyLib
     /// <summary>If the library is up to date with the expected version</summary>
     public static bool checkVersion(int expectedVersion) => version >= expectedVersion;
 
-    /// <summary>Advanced steamID check to avoid bypasses</summary>
-    public static bool isUser(bool offlineOK, bool checkCache, params ulong[] steamIDs)
+    /// <summary>Advanced SteamID check to avoid bypasses</summary>
+    /// <remarks>Previous SteamIDs will be cached and checked for</remarks>
+    public static bool isUser(bool offlineOK, bool checkCache, params ulong[] sIDs)
     {
         if (!offlineOK && offline) return true;
-        if (checkCache)
-            try { if (steamIDs.Contains(ulong.Parse(File.ReadAllText(path)))) return true; }
-            catch { }
-        return steamIDs.Contains(id);
+        if (sIDs.Contains(id)) return true;
+        if (checkCache) for (var i = 0; i < cacheIDs.Length; i++)
+            if (sIDs.Contains(cacheIDs[i])) return true;
+        return false;
     }
 
-    /// <summary>Advanced steamID check to avoid bypasses</summary>
+    /// <summary>Advanced SteamID check to avoid bypasses</summary>
     /// <remarks>Checks cache</remarks>
-    public static bool isUser(bool offlineOK, params ulong[] steamIDs) => isUser(offlineOK, true, steamIDs);
+    public static bool isUser(bool offlineOK, params ulong[] sIDs) => isUser(offlineOK, true, sIDs);
 
-    /// <summary>Advanced steamID check to avoid bypasses</summary>
+    /// <summary>Advanced SteamID check to avoid bypasses</summary>
     /// <remarks>Checks cache but not offline</remarks>
-    public static bool isUser(params ulong[] steamIDs) => isUser(true, true, steamIDs);
+    public static bool isUser(params ulong[] sIDs) => isUser(true, true, sIDs);
 
-    static string str(params byte[] codes)
+    /// <summary>Checks if the current user is registered as a tester</summary>
+    /// <remarks>Returns true if the user's SteamID is registered with the bot</remarks>
+    public static bool isTester(Mod mod)
     {
-        var chars = new char[codes.Length];
-        for (byte i = 0; i < codes.Length; i++) chars[i] = (char)codes[i];
-        return new string(chars);
+        try
+        {
+            using (var response = (HttpWebResponse)WebRequest.Create($"http://ec2-3-23-131-103.us-east-2.compute.amazonaws.com:8080/{id}&{mod.ID}").GetResponse())
+            {
+                using (var stream = response.GetResponseStream())
+                {
+                    using (var reader = new StreamReader(stream))
+                    {
+                        return reader.ReadToEnd()[0] == '1';
+                    }
+                }
+            }
+        }
+        catch { return false; }
     }
 }

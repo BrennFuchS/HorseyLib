@@ -9,6 +9,7 @@ Name | Type | Path
 -|-|-
 offline | bool | `Steamworks.NativeMethods.SteamClient() == null`
 id | ulong | `Steamworks.NativeMethods.ISteamUser_GetSteamID()`
+cacheIDs | ulong[] | Past SteamIDs
 SATSUMA | GameObject | `SATSUMA(557kg, 248)`
 CARPARTS | GameObject | `CARPARTS`
 PLAYER | GameObject | `PLAYER`
@@ -59,8 +60,8 @@ CurrentVehicle | FsmString | `Globals/PlayerCurrentVehicle`
 PlayerFirstName | FsmString | `Globals/PlayerFirstName`
 PlayerLastName | FsmString | `Globals/PlayerLastName`
 PlayerName | FsmString | `Globals/PlayerName`
-ClockMinutes | float | N/A
-ClockHours | int | N/A
+ClockMinutes | float | `MAP/SUN/Pivot/SUN: Minutes`
+ClockHours | int | `MAP/SUN/Pivot/SUN: Time`
 
 <br>
 
@@ -71,6 +72,7 @@ checkVersion | bool | `int expectedVersion` | If the library is up to date with 
 isUser | bool | `bool offlineOK, checkCache, params ulong[] steamIDs` | Advanced steamID check to avoid bypasses
 isUser | bool | `bool offlineOK, params ulong[] steamIDs` | Checks cache
 isUser | bool | `params ulong[] steamIDs` | Checks cache but not offline
+isTester | bool | `Mod mod` | Returns true if the user's SteamID is registered with the bot
 
 <br>
 
